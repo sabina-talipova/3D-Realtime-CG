@@ -44,6 +44,9 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	m_model.shader = shader;
 	m_model.mesh = load_wavefront_data(CGRA_SRCDIR + std::string("/res//assets//teapot.obj")).build();
 	m_model.color = vec3(1, 0, 0);
+
+	sk_model.shader = shader;
+	sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//priman.asf"));
 }
 
 
@@ -80,7 +83,10 @@ void Application::render() {
 
 
 	// draw the model
-	m_model.draw(view, proj);
+	//m_model.draw(view, proj);
+
+	// draw skeleton
+	sk_model.draw(view, proj);
 }
 
 

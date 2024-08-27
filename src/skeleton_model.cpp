@@ -26,5 +26,37 @@ void skeleton_model::draw(const mat4 &view, const mat4 &proj) {
 
 
 void skeleton_model::drawBone(const mat4 &parentTransform, int boneid) {
-	// TODO
+
+    const skeleton_bone& bone = skel.bones[boneid];
+
+    glm::mat4 boneTransform = parentTransform * translate(mat4(1), bone.direction * (bone.length * 50));
+    boneTransform *= glm::mat4_cast(glm::quat(bone.basis));
+
+	if (boneid) {
+		drawJoint(parentTransform);
+		//drawMainBone(parentTransform, bone);
+		//drawAxis(parentTransform, bone);
+	}
+	
+
+
+    for (int childIndex : bone.children) {
+        drawBone(boneTransform, childIndex);
+    }
+}
+
+void skeleton_model::drawJoint(const mat4& parentTransform)
+{
+}
+
+void skeleton_model::drawMainBone(const glm::mat4& parentTransform, skeleton_bone& bone)
+{
+}
+
+void skeleton_model::drawAxis(const glm::mat4& parentTransform, skeleton_bone& bone)
+{
+}
+
+void skeleton_model::drawAxisHelper(const glm::vec3 color, glm::mat4& rotation)
+{
 }

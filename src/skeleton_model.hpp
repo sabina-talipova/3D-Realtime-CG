@@ -11,6 +11,10 @@ class skeleton_model {
 private:
 	// recursive helper method
 	void drawBone(const glm::mat4 &view, int boneid);
+	void drawJoint(const glm::mat4& parentTransform);
+	void drawMainBone(const glm::mat4& parentTransform, skeleton_bone& bone);
+	void drawAxis(const glm::mat4& parentTransform, skeleton_bone& bone);
+	void drawAxisHelper(const glm::vec3 color, glm::mat4& rotation);
 
 public:
 	GLuint shader = 0;
