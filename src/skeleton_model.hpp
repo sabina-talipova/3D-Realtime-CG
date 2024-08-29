@@ -14,7 +14,7 @@ private:
 	void drawJoint(const glm::mat4& parentTransform);
 	void drawMainBone(const glm::mat4& parentTransform, skeleton_bone& bone);
 	void drawAxis(const glm::mat4& parentTransform, skeleton_bone& bone);
-	void drawAxisHelper(const glm::vec3 color, glm::mat4& rotation);
+	void drawAxisHelper(const glm::vec3 color, glm::mat4& view_matrix);
 
 public:
 	GLuint shader = 0;
