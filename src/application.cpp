@@ -86,7 +86,7 @@ void Application::render() {
 	//m_model.draw(view, proj);
 
 	// draw skeleton
-	sk_model.draw(view, proj);
+	if (sk_show_skeleton) sk_model.draw(view, proj);
 }
 
 
@@ -119,6 +119,14 @@ void Application::renderGUI() {
 	if (ImGui::InputFloat("example input", &exampleInput)) {
 		cout << "example input changed to " << exampleInput << endl;
 	}
+
+	// Skeleton helpers
+	ImGui::Separator();
+	ImGui::Text("Skeleton");
+
+	if (ImGui::Checkbox("Show skeleton", &sk_show_skeleton)) {}
+
+	ImGui::Separator();
 
 	// finish creating window
 	ImGui::End();

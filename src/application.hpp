@@ -47,6 +47,9 @@ private:
 	bool m_show_grid = false;
 	bool m_showWireframe = false;
 
+	// skeleton project flags
+	bool sk_show_skeleton = false;
+
 	// geometry
 	basic_model m_model;
 
