@@ -123,8 +123,21 @@ void Application::renderGUI() {
 	// Skeleton helpers
 	ImGui::Separator();
 	ImGui::Text("Skeleton");
+	ImGui::Checkbox("Show skeleton", &sk_show_skeleton);
 
-	if (ImGui::Checkbox("Show skeleton", &sk_show_skeleton)) {}
+	ImGui::Text("Skeleton Pose");
+
+	if (ImGui::Button("Default")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//priman.asf"));
+	ImGui::SameLine();
+	if (ImGui::Button("Kicking")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//priman.asf"));
+	ImGui::SameLine();
+	if (ImGui::Button("Running")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//priman.asf"));
+
+	if (ImGui::Button("Punching")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//priman.asf"));
+	ImGui::SameLine();
+	if (ImGui::Button("Walking")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//walking.asf"));
+	ImGui::SameLine();
+	if (ImGui::Button("Seated")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//priman.asf"));
 
 	ImGui::Separator();
 

@@ -1,3 +1,8 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 // glm
 #include <glm/gtc/matrix_transform.hpp>
@@ -15,6 +20,133 @@ using namespace cgra;
 
 #define BONE_SCALE 30
 
+//glm::mat4 createRotationMatrix(float pitch, float yaw, float roll) {
+//	glm::mat4 rotateX = glm::rotate(glm::mat4(1.0f), glm::radians(pitch), glm::vec3(1, 0, 0));
+//	glm::mat4 rotateY = glm::rotate(glm::mat4(1.0f), glm::radians(yaw), glm::vec3(0, 1, 0));
+//	glm::mat4 rotateZ = glm::rotate(glm::mat4(1.0f), glm::radians(roll), glm::vec3(0, 0, 1));
+//
+//	return rotateY * rotateX * rotateZ;
+//}
+//
+//glm::vec3 applyRotation(const glm::vec3& direction, float pitch, float yaw, float roll) {
+//	glm::mat4 rotationMatrix = createRotationMatrix(pitch, yaw, roll);
+//	glm::vec4 newDirection = rotationMatrix * glm::vec4(direction, 0.0f);
+//	return glm::vec3(newDirection);
+//}
+//
+//void generatePose(const std::string& filename) {
+//
+//}
+
+struct Pose {
+	string bone_name;
+	glm::vec3 new_bone_axis;
+	glm::vec3 new_bone_position;
+};
+
+vector<Pose> new_pose;
+
+void parseLine(const string& line) {
+	istringstream iss(line);
+	string token;
+	vector<string> tokens;
+	Pose pose;
+
+	while (iss >> token) {
+		tokens.push_back(token);
+	}
+
+	int vec_size = tokens.size();
+
+	pose.bone_name = tokens[0];
+	float x = std::stof(tokens[1]);
+	float y = vec_size > 2 ? std::stof(tokens[2]) : 0.0f;
+	float z = vec_size > 3 ? std::stof(tokens[3]) : 0.0f;
+	pose.new_bone_axis = vec3(x, y, z);
+
+	new_pose.push_back(pose);
+}
+
+void readFile(const std::string& filename) {
+	std::ifstream file(filename);
+
+	if (!file.is_open()) {
+		std::cerr << "Cannot open file : " << filename << std::endl;
+		return;
+	}
+
+	std::string line;
+	while (std::getline(file, line)) {
+		parseLine(line);
+	}
+
+	file.close();
+}
+
+glm::mat4 createRotationMatrix(float pitch, float yaw, float roll) {
+	glm::mat4 rotateX = glm::rotate(glm::mat4(1.0f), glm::radians(pitch), glm::vec3(1, 0, 0));
+	glm::mat4 rotateY = glm::rotate(glm::mat4(1.0f), glm::radians(yaw), glm::vec3(0, 1, 0));
+	glm::mat4 rotateZ = glm::rotate(glm::mat4(1.0f), glm::radians(roll), glm::vec3(0, 0, 1));
+
+	return rotateY * rotateX * rotateZ;
+}
+
+glm::vec3 applyRotation(const glm::vec3& direction, float pitch, float yaw, float roll) {
+	glm::mat4 rotationMatrix = createRotationMatrix(pitch, yaw, roll);
+	glm::vec4 newDirection = rotationMatrix * glm::vec4(direction, 0.0f);
+	return glm::vec3(newDirection);
+}
+
+skeleton_bone* skeleton_model::findBoneByName(const std::string& name) {
+	for (auto& bone : skel.bones) {
+		if (bone.name == name) {
+			return &bone;
+		}
+	}
+	return nullptr;
+}
+
+void skeleton_model::computeNewDirections() {
+
+	readFile(CGRA_SRCDIR + std::string("/res//assets//test.txt"));
+
+	for (Pose& pose : new_pose) {
+		string boneName = pose.bone_name;
+		glm::mat4 rotationMatrix = glm::mat4(1.0f);
+
+		/*skeleton_bone* bone = findBoneByName(boneName);*/
+		int boneId = skel.findBone(boneName);
+
+		if (boneId >= 0) {
+			skeleton_bone bone = skel.bones[boneId];
+			glm::vec3 old_direction = bone.direction;
+
+			float x_rot;
+			float y_rot;
+			float z_rot;
+
+			if (bone.freedom & dof_rx) {
+				x_rot = pose.new_bone_axis.x;
+			}
+
+			if (bone.freedom & dof_ry) {
+				y_rot = pose.new_bone_axis.y == 0.0f ? pose.new_bone_axis.x : bone.basis.y;
+			}
+
+			if (bone.freedom & dof_rz) {
+				z_rot = pose.new_bone_axis.z == 0.0f ? pose.new_bone_axis.x : bone.basis.z;
+			}
+
+			pose.new_bone_position = applyRotation(old_direction, pose.new_bone_axis.x, pose.new_bone_axis.y, pose.new_bone_axis.z);
+
+
+			std::cout << "pose_name " << pose.bone_name << std::endl;
+			std::cout << "direction " << pose.new_bone_position.x << " " << pose.new_bone_position.y << " " << pose.new_bone_position.z << std::endl;
+			std::cout << "axis " << pose.new_bone_axis.x << " " << pose.new_bone_axis.y << " " << pose.new_bone_axis.z <<  "   XYZ" << std::endl;
+		}
+	}
+}
+
 void skeleton_model::draw(const mat4 &view, const mat4 &proj) {
 	// set up the shader for every draw call
 	glUseProgram(shader);
@@ -24,6 +156,8 @@ void skeleton_model::draw(const mat4 &view, const mat4 &proj) {
 	if (!skel.bones.empty()) {
 		drawBone(view, 0);
 	}
+
+	//computeNewDirections();
 }
 
 
