@@ -28,18 +28,13 @@ struct Pose {
 
 vector<Pose> new_pose;
 
-glm::mat4 createRotationMatrix(float pitch, float yaw, float roll) {
-	glm::mat4 rotateX = glm::rotate(glm::mat4(1.0f), glm::radians(pitch), glm::vec3(1, 0, 0));
-	glm::mat4 rotateY = glm::rotate(glm::mat4(1.0f), glm::radians(yaw), glm::vec3(0, 1, 0));
-	glm::mat4 rotateZ = glm::rotate(glm::mat4(1.0f), glm::radians(roll), glm::vec3(0, 0, 1));
-
-	return rotateY * rotateX * rotateZ;
-}
-
 glm::vec3 applyRotation(const glm::vec3& direction, float pitch, float yaw, float roll) {
-	glm::mat4 rotationMatrix = createRotationMatrix(pitch, yaw, roll);
-	glm::vec4 newDirection = rotationMatrix * glm::vec4(direction, 0.0f);
-	return glm::vec3(newDirection);
+	glm::quat rotationQuat = glm::quat(glm::radians(glm::vec3(pitch, yaw, roll)));
+
+	glm::vec3 newDirection = rotationQuat * direction;
+	newDirection = glm::normalize(newDirection);
+
+	return newDirection;
 }
 
 void skeleton_model::parseFile(const std::string& filename) {

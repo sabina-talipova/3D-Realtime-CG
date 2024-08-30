@@ -45,7 +45,7 @@
   begin
      id 4 
      name lfoot
-     direction0.0328432 -0.453904 0.890445  
+     direction 0.0328432 -0.453904 0.890445  
      length 2.00008   
      axis -76.5563 3.02341 -1.79327   XYZ
     dof rx rz
