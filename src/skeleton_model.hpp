@@ -16,7 +16,7 @@ private:
 	void drawAxis(const glm::mat4& parentTransform, skeleton_bone& bone);
 	void drawAxisHelper(const glm::vec3 color, glm::mat4& view_matrix);
 	void computeNewDirections();
-	skeleton_bone* findBoneByName(const std::string& name);
+	void parseFile(const std::string& filename);
 
 public:
 	GLuint shader = 0;
