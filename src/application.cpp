@@ -21,6 +21,11 @@ using namespace std;
 using namespace cgra;
 using namespace glm;
 
+float animationTime = 0.0f;
+float totalTime = 10.0f;
+
+float lastTime = 0.0f;
+
 
 void basic_model::draw(const glm::mat4 &view, const glm::mat4 proj) {
 	mat4 modelview = view * modelTransform;
@@ -31,6 +36,38 @@ void basic_model::draw(const glm::mat4 &view, const glm::mat4 proj) {
 	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(color));
 
 	mesh.draw(); // draw
+}
+
+void basic_model::animate(const glm::mat4& view, const glm::mat4 proj, float deltaTime)
+{
+	animationTime += deltaTime;
+	if (animationTime > totalTime) {
+		animationTime = 0.0f;
+	}
+
+	float t = animationTime / totalTime;
+	int numPoints = animation_path.points.size();
+	int segment = int(t * (numPoints - 3));
+	float localT = (t * (numPoints - 3)) - segment;
+	std::vector<glm::vec3> controlPoints = animation_path.points;
+
+
+	glm::vec3 interpolatedPosition = animation_path.calculateCatmullRomPoint(
+		controlPoints[segment],
+		controlPoints[segment + 1],
+		controlPoints[segment + 2],
+		controlPoints[segment + 3],
+		localT
+	);
+
+	glm::mat4 modelMatrix = view * glm::translate(glm::mat4(1.0f), interpolatedPosition) * modelTransform;
+
+	glUseProgram(shader);
+	glUniformMatrix4fv(glGetUniformLocation(shader, "uProjectionMatrix"), 1, false, value_ptr(proj));
+	glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(modelMatrix));
+	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(color));
+
+	mesh.draw();
 }
 
 
@@ -47,10 +84,32 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 
 	sk_model.shader = shader;
 	sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//priman.asf"));
+
+	sp_model.shader = shader;
+
+	const glm::vec3 verts[] = {
+		glm::vec3(-30, -10, -20),
+		glm::vec3(30, 10, -10),
+		glm::vec3(-20, -5, -5),
+		glm::vec3(20, 5, 1),
+		glm::vec3(-10, 0, 5),
+		glm::vec3(10, 0, 10),
+		glm::vec3(-40, -5, 20),
+		glm::vec3(40, 5, 30)
+	};
+
+	for (auto vert : verts) {
+		sp_model.points.push_back(vert);
+	}
+
+	m_model.animation_path = sp_model;
 }
 
 
 void Application::render() {
+	float currentTime = static_cast<float>(glfwGetTime());
+	float deltaTime = currentTime - lastTime;
+	lastTime = currentTime;
 	
 	// retrieve the window hieght
 	int width, height;
@@ -86,7 +145,28 @@ void Application::render() {
 	//m_model.draw(view, proj);
 
 	// draw skeleton
-	if (sk_show_skeleton) sk_model.draw(view, proj);
+	if (m_show_skeleton) sk_model.draw(view, proj);
+
+	// draw spline
+	if (m_show_spline) {
+		if (m_show_bezier_spline) {
+			sp_model.show_bezier_curve = true;
+			sp_model.show_catmull_rom_curve = false;
+		}
+		else if (m_show_catmull_rom_spline) {
+			sp_model.show_catmull_rom_curve = true;
+			sp_model.show_bezier_curve = false;
+		}
+		else {
+			sp_model.show_bezier_curve = false;
+			sp_model.show_catmull_rom_curve = false;
+		}
+		sp_model.draw(view, proj);
+	}
+
+	if (m_animate_object) {
+		m_model.animate(view, proj, deltaTime);
+	}
 }
 
 
@@ -94,7 +174,7 @@ void Application::renderGUI() {
 
 	// setup window
 	ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiSetCond_Once);
-	ImGui::SetNextWindowSize(ImVec2(300, 200), ImGuiSetCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(300, 600), ImGuiSetCond_Once);
 	ImGui::Begin("Options", 0);
 
 	// display current camera parameters
@@ -123,7 +203,7 @@ void Application::renderGUI() {
 	// Skeleton helpers
 	ImGui::Separator();
 	ImGui::Text("Skeleton");
-	ImGui::Checkbox("Show skeleton", &sk_show_skeleton);
+	ImGui::Checkbox("Show skeleton", &m_show_skeleton);
 
 	ImGui::Text("Skeleton Pose");
 
@@ -137,9 +217,37 @@ void Application::renderGUI() {
 	ImGui::SameLine();
 	if (ImGui::Button("Walking")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//walking.asf"));
 	ImGui::SameLine();
-	if (ImGui::Button("Seated")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//priman.asf"));
+	if (ImGui::Button("Seating")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//priman.asf"));
 
 	ImGui::Separator();
+
+	ImGui::Text("Spline Points");
+	ImGui::Separator();
+	ImGui::Checkbox("Show spline", &m_show_spline);
+
+	if(ImGui::Checkbox("Show bezier spline", &m_show_bezier_spline)) m_show_catmull_rom_spline = false;
+	ImGui::SameLine();
+	if(ImGui::Checkbox("Show catmull rom spline", &m_show_catmull_rom_spline)) m_show_bezier_spline = false;
+	ImGui::Separator();
+
+	if (ImGui::Button("Add point")) {
+		sp_model.points.push_back(vec3(0, 0, 0));
+	}
+	for (int i = 0; i < (int)sp_model.points.size(); i++) {
+		ImGui::SliderFloat3(("##" + to_string(i)).c_str(), value_ptr(sp_model.points[i]), -100, 100);
+		ImGui::SameLine();
+		if (ImGui::Button(("-##" + to_string(i)).c_str())) {
+			sp_model.points.erase(sp_model.points.begin() + i);
+		}
+	}
+
+	ImGui::Separator();
+
+	ImGui::Text("Animate Object");
+	if (ImGui::Button("Play")) {
+		m_animate_object = !m_animate_object;
+		m_show_spline = !m_show_spline;
+	}
 
 	// finish creating window
 	ImGui::End();
