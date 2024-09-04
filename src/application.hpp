@@ -10,6 +10,7 @@
 #include "cgra/cgra_mesh.hpp"
 #include "skeleton_model.hpp"
 #include "spline_model.hpp"
+#include "camera.hpp"
 
 
 // Basic model that holds the shader, mesh and transform for drawing.
@@ -24,8 +25,11 @@ struct basic_model {
 
 	spline_model animation_path;
 
+	glm::vec3 interpolatedPosition;
+
 	void draw(const glm::mat4 &view, const glm::mat4 proj);
-	void animate(const glm::mat4& view, const glm::mat4 proj, float deltaTime);
+	void animate(const glm::mat4& view, const glm::mat4 proj);
+	void calculateCatmullRomPoint();
 };
 
 // Main application class
@@ -59,6 +63,7 @@ private:
 	bool m_show_catmull_rom_spline = false;
 
 	bool m_animate_object = false;
+	bool m_animate_camera = false;
 
 	// geometry
 	basic_model m_model;
@@ -68,6 +73,10 @@ private:
 
 	// spline
 	spline_model sp_model;
+
+	//camera
+	camera m_camera;
+	float m_totalTime = 24.0f;
 
 public:
 	// setup

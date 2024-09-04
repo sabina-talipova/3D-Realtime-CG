@@ -9,7 +9,6 @@
 
 // project
 #include "cgra/cgra_geometry.hpp"
-#include "spline_model.hpp"
 
 using namespace std;
 using namespace glm;

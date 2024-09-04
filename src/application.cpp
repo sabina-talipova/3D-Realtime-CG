@@ -22,9 +22,18 @@ using namespace cgra;
 using namespace glm;
 
 float animationTime = 0.0f;
-float totalTime = 10.0f;
-
 float lastTime = 0.0f;
+
+float key_time = 0.0f;
+
+void calculateKeyTime(float deltaTime, float totalTime) {
+	animationTime += deltaTime;
+	if (animationTime > totalTime) {
+		animationTime = 0.0f;
+	}
+
+	key_time = animationTime / totalTime;
+}
 
 
 void basic_model::draw(const glm::mat4 &view, const glm::mat4 proj) {
@@ -38,28 +47,24 @@ void basic_model::draw(const glm::mat4 &view, const glm::mat4 proj) {
 	mesh.draw(); // draw
 }
 
-void basic_model::animate(const glm::mat4& view, const glm::mat4 proj, float deltaTime)
+void basic_model::calculateCatmullRomPoint()
 {
-	animationTime += deltaTime;
-	if (animationTime > totalTime) {
-		animationTime = 0.0f;
-	}
-
-	float t = animationTime / totalTime;
 	int numPoints = animation_path.points.size();
-	int segment = int(t * (numPoints - 3));
-	float localT = (t * (numPoints - 3)) - segment;
+	int segment = int(key_time * (numPoints - 3));
+	float localT = (key_time * (numPoints - 3)) - segment;
 	std::vector<glm::vec3> controlPoints = animation_path.points;
 
-
-	glm::vec3 interpolatedPosition = animation_path.calculateCatmullRomPoint(
+	interpolatedPosition = animation_path.calculateCatmullRomPoint(
 		controlPoints[segment],
 		controlPoints[segment + 1],
 		controlPoints[segment + 2],
 		controlPoints[segment + 3],
 		localT
 	);
+}
 
+void basic_model::animate(const glm::mat4& view, const glm::mat4 proj)
+{
 	glm::mat4 modelMatrix = view * glm::translate(glm::mat4(1.0f), interpolatedPosition) * modelTransform;
 
 	glUseProgram(shader);
@@ -69,7 +74,6 @@ void basic_model::animate(const glm::mat4& view, const glm::mat4 proj, float del
 
 	mesh.draw();
 }
-
 
 Application::Application(GLFWwindow *window) : m_window(window) {
 	
@@ -101,8 +105,6 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	for (auto vert : verts) {
 		sp_model.points.push_back(vert);
 	}
-
-	m_model.animation_path = sp_model;
 }
 
 
@@ -110,6 +112,8 @@ void Application::render() {
 	float currentTime = static_cast<float>(glfwGetTime());
 	float deltaTime = currentTime - lastTime;
 	lastTime = currentTime;
+
+	calculateKeyTime(deltaTime, m_totalTime);
 	
 	// retrieve the window hieght
 	int width, height;
@@ -165,7 +169,23 @@ void Application::render() {
 	}
 
 	if (m_animate_object) {
-		m_model.animate(view, proj, deltaTime);
+		m_model.animation_path = sp_model;
+		m_model.calculateCatmullRomPoint();
+		m_model.animate(view, proj);
+	}
+
+	if (m_animate_camera) {
+		m_model.animation_path = sp_model;
+		m_model.calculateCatmullRomPoint();
+
+		glm::vec3 objPosition = m_model.interpolatedPosition;
+		m_camera.animateCamera(objPosition, key_time);
+		glm::mat4 view = glm::lookAt(m_camera.position, m_camera.target, m_camera.up);
+
+		m_model.animate(view, proj);
+		// helper
+		sp_model.show_catmull_rom_curve = true;
+		sp_model.draw(view, proj);
 	}
 }
 
@@ -248,6 +268,50 @@ void Application::renderGUI() {
 		m_animate_object = !m_animate_object;
 		m_show_spline = !m_show_spline;
 	}
+
+	ImGui::Separator();
+
+	ImGui::Text("Animate Camera");
+	if (ImGui::Button("Play Camera")) {
+
+		//sp_model.points.clear();
+
+		std::vector<glm::vec3> points;
+
+		//const glm::vec3 verts[] = {
+		//	glm::vec3(-20, 0, -20),
+		//	glm::vec3(20, 2, -20),
+		//	glm::vec3(20, 4, 20),
+		//	glm::vec3(-20, 6, 20),
+		//	glm::vec3(-20, 8, -20),
+
+		//	glm::vec3(-20, 10, -20),
+		//	glm::vec3(20, 12, -20),
+		//	glm::vec3(20, 14, 20),
+		//	glm::vec3(-20, 16, 20),
+		//	glm::vec3(-20, 18, -20),
+		//	glm::vec3(-20, 20, -20),
+		//};
+
+		const glm::vec3 verts[] = {
+			glm::vec3(20, 0, -20),
+			glm::vec3(20, 20, -20),
+			glm::vec3(20, 40, -20),
+			glm::vec3(20, 60, -20),
+			glm::vec3(20, 80, -20),
+		};
+
+		for (auto vert : verts) {
+			points.push_back(vert);
+		}
+
+		m_camera.camera_path = points;
+
+		m_animate_camera = !m_animate_camera;
+		m_show_spline = !m_show_spline;
+	}
+
+	ImGui::SliderFloat("Speed", &m_totalTime, 0, 100, "%.2f", 2.0f);
 
 	// finish creating window
 	ImGui::End();
