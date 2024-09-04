@@ -233,7 +233,7 @@ void Application::renderGUI() {
 	ImGui::SameLine();
 	if (ImGui::Button("Running")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//running.asf"));
 
-	if (ImGui::Button("Punching")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//punching.asf"));
+	if (ImGui::Button("Jumping")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//jumping.asf"));
 	ImGui::SameLine();
 	if (ImGui::Button("Walking")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//walking.asf"));
 	ImGui::SameLine();
