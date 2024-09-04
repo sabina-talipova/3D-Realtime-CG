@@ -229,15 +229,15 @@ void Application::renderGUI() {
 
 	if (ImGui::Button("Default")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//priman.asf"));
 	ImGui::SameLine();
-	if (ImGui::Button("Kicking")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//priman.asf"));
+	if (ImGui::Button("Kicking")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//kicking.asf"));
 	ImGui::SameLine();
-	if (ImGui::Button("Running")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//priman.asf"));
+	if (ImGui::Button("Running")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//running.asf"));
 
-	if (ImGui::Button("Punching")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//priman.asf"));
+	if (ImGui::Button("Punching")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//punching.asf"));
 	ImGui::SameLine();
 	if (ImGui::Button("Walking")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//walking.asf"));
 	ImGui::SameLine();
-	if (ImGui::Button("Seating")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//priman.asf"));
+	if (ImGui::Button("Seating")) sk_model.skel = skeleton_data(CGRA_SRCDIR + std::string("/res//assets//seating.asf"));
 
 	ImGui::Separator();
 
